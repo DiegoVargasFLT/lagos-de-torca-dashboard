@@ -15,6 +15,7 @@ import { globalStats, ufData } from "../../data/mockData";
 import { formatCurrency, formatPercentage, cn } from "../../lib/utils";
 import { Card } from "../Card";
 import { BudgetAnalysisTable } from "../BudgetAnalysisTable";
+import { InterventoriaBudgetTable } from "../InterventoriaBudgetTable";
 import { 
   ResponsiveContainer, 
   PieChart, 
@@ -29,9 +30,12 @@ import {
   Legend
 } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
+import { exportAsImage } from "../../lib/exportUtils";
 
 export const CostControl: React.FC = () => {
   const { selectedUFId, filteredUFData, selectedUF } = useDashboard();
+  const [activeDashboard, setActiveDashboard] = React.useState<"constructor" | "interventoria">("constructor");
+  const reportRef = React.useRef<HTMLDivElement>(null);
 
   const totalContractual = filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.value + uf.interventoriaContract.value, 0);
   const totalExecuted = filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.executed + uf.interventoriaContract.executed, 0);
@@ -45,15 +49,18 @@ export const CostControl: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10" ref={reportRef}>
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h2 className="text-3xl font-display font-bold text-violeta-dark tracking-tight">Gestión Financiera</h2>
           <p className="text-sm text-gray-500 font-medium">Control presupuestal, ejecución y facturación del proyecto</p>
         </div>
-        <div className="flex items-center gap-4">
-          <button className="glass-card px-6 py-3 rounded-2xl flex items-center gap-3 hover:bg-white hover:shadow-premium transition-all group">
+        <div className="flex items-center gap-4 no-print">
+          <button 
+            onClick={() => exportAsImage(reportRef, 'Reporte_Financiero_Torca')}
+            className="glass-card px-6 py-3 rounded-2xl flex items-center gap-3 hover:bg-white hover:shadow-premium transition-all group"
+          >
             <div className="p-2 bg-emerald-50 rounded-xl text-emerald-600 group-hover:scale-110 transition-transform">
               <FileSpreadsheet size={18} />
             </div>
@@ -89,7 +96,49 @@ export const CostControl: React.FC = () => {
 
       {/* Main Content Area */}
       {selectedUF ? (
-        <BudgetAnalysisTable uf={selectedUF} />
+        <div className="space-y-8">
+          <div className="flex justify-center no-print">
+            <div className="flex bg-white/50 backdrop-blur-md p-1.5 rounded-3xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
+              <button
+                onClick={() => setActiveDashboard("constructor")}
+                className={cn(
+                  "px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.1em] transition-all flex items-center gap-2",
+                  activeDashboard === "constructor" 
+                    ? "bg-violeta-dark text-white shadow-lg shadow-violeta-dark/20" 
+                    : "text-gray-400 hover:text-violeta-dark"
+                )}
+              >
+                <div className={cn("w-2 h-2 rounded-full", activeDashboard === "constructor" ? "bg-rio-verde animate-pulse" : "bg-gray-300")} />
+                Presupuesto Constructor
+              </button>
+              <button
+                onClick={() => setActiveDashboard("interventoria")}
+                className={cn(
+                  "px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.1em] transition-all flex items-center gap-2",
+                  activeDashboard === "interventoria" 
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
+                    : "text-gray-400 hover:text-blue-600"
+                )}
+              >
+                <div className={cn("w-2 h-2 rounded-full", activeDashboard === "interventoria" ? "bg-amber-400 animate-pulse" : "bg-gray-300")} />
+                Presupuesto Interventoría
+              </button>
+            </div>
+          </div>
+
+          <motion.div
+            key={activeDashboard}
+            initial={{ opacity: 0, x: activeDashboard === "constructor" ? -20 : 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
+            {activeDashboard === "constructor" ? (
+              <BudgetAnalysisTable uf={selectedUF} />
+            ) : (
+              <InterventoriaBudgetTable uf={selectedUF} />
+            )}
+          </motion.div>
+        </div>
       ) : (
         <div className="bento-grid gap-8">
           {/* Main Financial Table */}
@@ -270,8 +319,8 @@ export const CostControl: React.FC = () => {
             <Wallet size={24} />
           </div>
           <div>
-            <h3 className="text-2xl font-display font-bold tracking-tight">Gestión de Anticipos</h3>
-            <p className="text-xs text-white/60 font-medium uppercase tracking-widest mt-1">Control de giros y amortización acumulada</p>
+            <h3 className="text-2xl font-display font-bold tracking-tight text-white">Gestión de Anticipos</h3>
+            <p className="text-xs text-white/70 font-medium uppercase tracking-widest mt-1">Control de giros y amortización acumulada</p>
           </div>
         </div>
         

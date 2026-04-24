@@ -1,25 +1,44 @@
 import React from "react";
-import { Bell, Search, Calendar as CalendarIcon, ChevronDown, Filter, Printer, FileSpreadsheet, Menu } from "lucide-react";
+import { Bell, Search, Calendar as CalendarIcon, ChevronDown, Filter, Printer, FileSpreadsheet, Menu, Image as ImageIcon } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useDashboard } from "../context/DashboardContext";
 import { ufData } from "../data/mockData";
+import { exportToExcel, exportAsImage } from "../lib/exportUtils";
 
 interface TopBarProps {
   title: string;
   onMenuClick: () => void;
+  contentRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ title, onMenuClick }) => {
-  const { selectedUFIds, setSelectedUFIds, selectedPeriod, setSelectedPeriod } = useDashboard();
+export const TopBar: React.FC<TopBarProps> = ({ title, onMenuClick, contentRef }) => {
+  const { selectedUFIds, setSelectedUFIds, selectedPeriod, setSelectedPeriod, filteredUFData, currentView } = useDashboard();
   const [isUFDropdownOpen, setIsUFDropdownOpen] = React.useState(false);
 
   const handlePrint = () => {
     window.print();
   };
 
+  const handleExportImage = () => {
+    exportAsImage(contentRef, `Dashboard_${title.replace(/\s+/g, '_')}`);
+  };
+
   const handleExportExcel = () => {
-    console.log("Exportando a Excel con formato de marca Lagos de Torca...");
-    alert("Exportación a Excel generada exitosamente.");
+    const dataToExport = filteredUFData.map(uf => ({
+      'Unidad Funcional': uf.id,
+      'Nombre del Tramo': uf.name,
+      'Contratista Constructor': uf.contractor,
+      'Interventoría': uf.interventoria,
+      'Avance Físico (%)': (uf.physicalProgress / 100).toLocaleString('en-US', {style: 'percent', minimumFractionDigits: 2}),
+      'Avance Financiero (%)': (uf.financialProgress / 100).toLocaleString('en-US', {style: 'percent', minimumFractionDigits: 2}),
+      'Valor Contrato Constructor': (uf.constructorContract.value).toLocaleString('es-CO', {style: 'currency', currency: 'COP'}),
+      'Ejecutado Constructor': (uf.constructorContract.executed).toLocaleString('es-CO', {style: 'currency', currency: 'COP'}),
+      'Facturado Constructor': (uf.constructorContract.invoiced).toLocaleString('es-CO', {style: 'currency', currency: 'COP'}),
+      'Valor Contrato Interventoría': (uf.interventoriaContract.value).toLocaleString('es-CO', {style: 'currency', currency: 'COP'}),
+      'Estado General': uf.statusText.toUpperCase()
+    }));
+
+    exportToExcel(dataToExport, `Reporte_Torca_${title.replace(/\s+/g, '_')}`, 'Resumen');
   };
 
   const toggleUF = (id: string) => {
@@ -139,6 +158,13 @@ export const TopBar: React.FC<TopBarProps> = ({ title, onMenuClick }) => {
         </div>
 
         <div className="flex items-center justify-end gap-2">
+          <button 
+            onClick={handleExportImage}
+            className="p-2.5 text-gray-400 hover:text-torca-azul hover:bg-torca-azul/5 rounded-xl transition-all"
+            title="Exportar como Imagen"
+          >
+            <ImageIcon size={20} />
+          </button>
           <button 
             onClick={handlePrint}
             className="p-2.5 text-gray-400 hover:text-torca-azul hover:bg-torca-azul/5 rounded-xl transition-all"

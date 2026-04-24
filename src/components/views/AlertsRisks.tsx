@@ -16,9 +16,12 @@ import { allAlerts } from "../../data/mockData";
 import { cn } from "../../lib/utils";
 import { Card } from "../Card";
 import { motion } from "motion/react";
+import { exportAsImage } from "../../lib/exportUtils";
+import { FileSpreadsheet } from "lucide-react";
 
 export const AlertsRisks: React.FC = () => {
   const { selectedUFId, filteredUFData } = useDashboard();
+  const reportRef = React.useRef<HTMLDivElement>(null);
 
   const alerts = selectedUFId === "consolidated" 
     ? allAlerts 
@@ -29,14 +32,23 @@ export const AlertsRisks: React.FC = () => {
   const infoCount = alerts.filter(a => a.type === "info").length;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10" ref={reportRef}>
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h2 className="text-3xl font-display font-bold text-violeta-dark tracking-tight">Riesgos y Alertas</h2>
           <p className="text-sm text-gray-500 font-medium">Monitoreo de eventos críticos y gestión preventiva de riesgos</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 no-print">
+          <button 
+            onClick={() => exportAsImage(reportRef, 'Reporte_Riesgos_Torca')}
+            className="glass-card px-6 py-3 rounded-2xl flex items-center gap-3 hover:bg-white hover:shadow-premium transition-all group"
+          >
+            <div className="p-2 bg-red-50 rounded-xl text-red-600 group-hover:scale-110 transition-transform">
+              <FileSpreadsheet size={18} />
+            </div>
+            <span className="text-xs font-bold text-violeta-dark uppercase tracking-widest">Descargar Registro</span>
+          </button>
           <div className="glass-card px-6 py-3 rounded-2xl flex items-center gap-3">
             <div className="p-2 bg-red-50 rounded-xl text-red-600">
               <ShieldAlert size={18} />

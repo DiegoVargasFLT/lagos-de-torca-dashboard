@@ -16,6 +16,7 @@ const DashboardContent: React.FC = () => {
   const { currentView, setCurrentView, selectedUFId, selectedUFIds } = useDashboard();
 
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const contentRef = React.useRef<HTMLDivElement>(null);
 
   const renderView = () => {
     switch (currentView) {
@@ -81,9 +82,10 @@ const DashboardContent: React.FC = () => {
         <TopBar 
           title={getTitle()} 
           onMenuClick={() => setIsSidebarOpen(true)}
+          contentRef={contentRef}
         />
         
-        <div className="py-8 md:py-16 px-4 md:px-12 max-w-[1600px] mx-auto w-full space-y-12">
+        <div ref={contentRef} className="py-8 md:py-16 px-4 md:px-12 max-w-[1600px] mx-auto w-full space-y-12 bg-white">
           <AnimatePresence mode="wait">
             <motion.div
               key={`${currentView}-${selectedUFId || 'consolidated'}`}

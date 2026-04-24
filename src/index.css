@@ -24,7 +24,7 @@
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight text-violeta-dark font-semibold;
+    @apply font-display tracking-tight font-semibold;
   }
 
   /* Smooth reveal for all pages */
@@ -94,19 +94,136 @@
 
 /* Print Styles */
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 1cm;
+  }
+
   .no-print {
     display: none !important;
   }
+
   .print-only {
     display: block !important;
   }
+
   body {
     background: white !important;
-    color: black !important;
+    color: #1A1433 !important;
+    font-size: 9pt !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
-  .card {
+
+  /* Unroll any scrollable containers for print */
+  * {
+    overflow: visible !important;
+    max-height: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  .premium-card {
     break-inside: avoid;
-    border: 1px solid #eee !important;
+    border: 1px solid #E2E8F0 !important;
     box-shadow: none !important;
+    border-radius: 1rem !important;
+    margin-bottom: 3rem !important;
+    padding: 2rem !important;
+    page-break-inside: avoid;
+    display: block !important;
+  }
+
+  .glass-card {
+    background: white !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: none !important;
+  }
+
+  .bento-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3rem !important;
+  }
+
+  .bento-grid > div {
+    width: 100% !important;
+    margin-bottom: 0 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  h1, h2, h3, h4 {
+    color: #1A1433 !important;
+    page-break-after: avoid;
+    margin-bottom: 1rem !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 8pt !important;
+    table-layout: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  th, td {
+    border: 1px solid #E2E8F0 !important;
+    padding: 0.75rem !important;
+    word-break: break-word !important;
+  }
+
+  /* Force Recharts to show up with consistent height */
+  .recharts-responsive-container {
+    width: 100% !important;
+    height: 380px !important;
+    min-height: 380px !important;
+    display: block !important;
+  }
+
+  .recharts-surface {
+    overflow: visible !important;
+  }
+
+  /* Force background colors */
+  .bg-violeta-dark {
+    background-color: #1A1433 !important;
+    color: white !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .bg-torca-azul {
+    background-color: #61B1E3 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .text-torca-azul {
+    color: #61B1E3 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Specific tweaks for better reports */
+  .flex-row {
+    flex-direction: column !important;
   }
 }

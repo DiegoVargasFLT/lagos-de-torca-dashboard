@@ -5,6 +5,7 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   ChevronRight,
+  ChevronDown,
   GanttChart,
   Target,
   ArrowRight,
@@ -30,7 +31,7 @@ import {
   Label
 } from "recharts";
 import { motion } from "motion/react";
-import { toPng } from 'html-to-image';
+import { exportAsImage } from "../../lib/exportUtils";
 
 export const Scheduling: React.FC = () => {
   const { filteredUFData, selectedUF, isConsolidated } = useDashboard();
@@ -38,18 +39,48 @@ export const Scheduling: React.FC = () => {
   const scurveRef = React.useRef<HTMLDivElement>(null);
   const summaryRef = React.useRef<HTMLDivElement>(null);
   const milestonesRef = React.useRef<HTMLDivElement>(null);
+  const [collapsedItems, setCollapsedItems] = React.useState<Set<string>>(new Set());
 
-  const exportAsImage = async (ref: React.RefObject<HTMLDivElement>, fileName: string) => {
-    if (ref.current === null) return;
-    try {
-      const dataUrl = await toPng(ref.current, { backgroundColor: '#ffffff', cacheBust: true });
-      const link = document.createElement('a');
-      link.download = `${fileName}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch (err) {
-      console.error('Failed to export image', err);
+  const milestoneRows = React.useMemo(() => [
+    { id: "M1", name: "Inicio Proyecto", duration: "0 días", start: "30/08/21", end: "30/08/21", prog: "100%", ejec: "100%", type: "milestone" },
+    { id: "S1", name: `CRONOGRAMA ${selectedUF ? selectedUF.id : "GLOBAL"}`, duration: "1550 días", start: "30/08/21", end: "27/11/25", prog: "98%", ejec: "94%", type: "summary", canCollapse: true },
+    { id: "SS1", parentId: "S1", name: "DISEÑOS", duration: "1160 días", start: "30/08/21", end: "01/11/24", prog: "100%", ejec: "100%", type: "subsummary", canCollapse: true },
+    { id: "SS2", parentId: "S1", name: "LIBERACIONES AMBIENTALES", duration: "1176 días", start: "30/08/21", end: "17/11/24", prog: "100%", ejec: "98%", type: "subsummary", canCollapse: true },
+    { id: "SS3", parentId: "S1", name: "LIBERACIONES PREDIALES", duration: "1246 días", start: "30/08/21", end: "26/01/25", prog: "100%", ejec: "96%", type: "subsummary", canCollapse: true },
+    { id: "SS4", parentId: "S1", name: "PREOPERATIVOS", duration: "254 días", start: "02/04/22", end: "12/12/22", prog: "100%", ejec: "100%", type: "subsummary", canCollapse: true },
+    { id: "S2", name: "CONSTRUCCIÓN", duration: "1053 días", start: "10/01/23", end: "27/11/25", prog: "85%", ejec: "78%", type: "summary", canCollapse: true },
+    { id: "SS5", parentId: "S2", name: "ESTRUCTURAS PRINCIPALES", duration: "780 días", start: "11/04/23", end: "30/06/25", prog: "92%", ejec: "88%", type: "subsummary", canCollapse: true },
+    { id: "T1", parentId: "SS5", name: "CIMENTACIÓN Y PILOTAJE", duration: "732 días", start: "30/05/23", end: "30/06/25", prog: "100%", ejec: "100%", type: "task", indent: true },
+    { id: "M2", parentId: "SS5", name: "Hito Terminación Cimentación", duration: "0 días", start: "30/06/25", end: "30/06/25", prog: "100%", ejec: "100%", type: "milestone", indent: true },
+    { id: "SS6", parentId: "S2", name: "SUPERESTRUCTURA", duration: "872 días", start: "10/01/23", end: "30/06/25", prog: "80%", ejec: "72%", type: "subsummary", canCollapse: true },
+    { id: "T2", parentId: "SS6", name: "VIGAS Y CABEZALES", duration: "842 días", start: "10/01/23", end: "30/06/25", prog: "85%", ejec: "78%", type: "task", indent: true },
+    { id: "SS7", parentId: "S2", name: "EQUIPAMIENTO URBANO", duration: "752 días", start: "09/05/23", end: "30/06/25", prog: "60%", ejec: "52%", type: "subsummary", canCollapse: true },
+    { id: "SS8", parentId: "S2", name: "COMPONENTES GLOBALES", duration: "581 días", start: "19/05/23", end: "30/06/25", prog: "65%", ejec: "60%", type: "subsummary", canCollapse: true },
+    { id: "T3", name: "Liquidación de Obra", duration: "90 días", start: "29/08/25", end: "30/12/25", prog: "0%", ejec: "0%", type: "task" },
+    { id: "M3", name: "Fin Proyecto", duration: "0 días", start: "27/11/25", end: "30/12/25", prog: "100%", ejec: "100%", type: "milestone" },
+  ], [selectedUF]);
+
+  const toggleItem = (id: string) => {
+    const newCollapsed = new Set(collapsedItems);
+    if (newCollapsed.has(id)) newCollapsed.delete(id);
+    else newCollapsed.add(id);
+    setCollapsedItems(newCollapsed);
+  };
+
+  const expandAll = () => setCollapsedItems(new Set());
+  const collapseAll = () => {
+    const collapsibleIds = milestoneRows.filter(r => r.canCollapse).map(r => r.id);
+    setCollapsedItems(new Set(collapsibleIds));
+  };
+
+  const isRowVisible = (row: any) => {
+    let currentParentId = row.parentId;
+    while (currentParentId) {
+      if (collapsedItems.has(currentParentId)) return false;
+      const parent = milestoneRows.find(r => r.id === currentParentId);
+      currentParentId = parent?.parentId;
     }
+    return true;
   };
 
   const allMilestones = filteredUFData.flatMap(uf => uf.milestones.map(m => ({ ...m, ufId: uf.id })));
@@ -655,6 +686,24 @@ export const Scheduling: React.FC = () => {
               <p className="text-[10px] opacity-70 font-bold uppercase tracking-widest mt-1">Detalle de hitos y dependencias de obra (Versión Estratégica)</p>
             </div>
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 no-print">
+                <button 
+                  onClick={expandAll}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase rounded-lg transition-all"
+                  title="Expandir Todo"
+                >
+                  <ChevronDown size={14} />
+                  Desplegar
+                </button>
+                <button 
+                  onClick={collapseAll}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase rounded-lg transition-all"
+                  title="Contraer Todo"
+                >
+                  <ChevronRight size={14} />
+                  Contraer
+                </button>
+              </div>
               <button 
                 onClick={() => exportAsImage(milestonesRef, 'Cronograma-Detallado')}
                 className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-colors border border-white/20"
@@ -686,31 +735,16 @@ export const Scheduling: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { name: "Inicio Proyecto", duration: "0 días", start: "30/08/21", end: "30/08/21", prog: "100%", ejec: "100%", type: "milestone" },
-                  { name: `CRONOGRAMA ${selectedUF ? selectedUF.id : "GLOBAL"}`, duration: "1550 días", start: "30/08/21", end: "27/11/25", prog: "98%", ejec: "94%", type: "summary" },
-                  { name: "DISEÑOS", duration: "1160 días", start: "30/08/21", end: "01/11/24", prog: "100%", ejec: "100%", type: "subsummary" },
-                  { name: "LIBERACIONES AMBIENTALES", duration: "1176 días", start: "30/08/21", end: "17/11/24", prog: "100%", ejec: "98%", type: "subsummary" },
-                  { name: "LIBERACIONES PREDIALES", duration: "1246 días", start: "30/08/21", end: "26/01/25", prog: "100%", ejec: "96%", type: "subsummary" },
-                  { name: "PREOPERATIVOS", duration: "254 días", start: "02/04/22", end: "12/12/22", prog: "100%", ejec: "100%", type: "subsummary" },
-                  { name: "CONSTRUCCIÓN", duration: "1053 días", start: "10/01/23", end: "27/11/25", prog: "85%", ejec: "78%", type: "summary" },
-                  { name: "ESTRUCTURAS PRINCIPALES", duration: "780 días", start: "11/04/23", end: "30/06/25", prog: "92%", ejec: "88%", type: "subsummary" },
-                  { name: "CIMENTACIÓN Y PILOTAJE", duration: "732 días", start: "30/05/23", end: "30/06/25", prog: "100%", ejec: "100%", type: "task", indent: true },
-                  { name: "Hito Terminación Cimentación", duration: "0 días", start: "30/06/25", end: "30/06/25", prog: "100%", ejec: "100%", type: "milestone", indent: true },
-                  { name: "SUPERESTRUCTURA", duration: "872 días", start: "10/01/23", end: "30/06/25", prog: "80%", ejec: "72%", type: "subsummary" },
-                  { name: "VIGAS Y CABEZALES", duration: "842 días", start: "10/01/23", end: "30/06/25", prog: "85%", ejec: "78%", type: "task", indent: true },
-                  { name: "EQUIPAMIENTO URBANO", duration: "752 días", start: "09/05/23", end: "30/06/25", prog: "60%", ejec: "52%", type: "subsummary" },
-                  { name: "COMPONENTES GLOBALES", duration: "581 días", start: "19/05/23", end: "30/06/25", prog: "65%", ejec: "60%", type: "subsummary" },
-                  { name: "Liquidación de Obra", duration: "90 días", start: "29/08/25", end: "30/12/25", prog: "0%", ejec: "0%", type: "task" },
-                  { name: "Fin Proyecto", duration: "0 días", start: "27/11/25", end: "30/12/25", prog: "100%", ejec: "100%", type: "milestone" },
-                ].map((row, idx) => (
+                {milestoneRows.filter(isRowVisible).map((row, idx) => (
                   <tr 
                     key={idx} 
                     className={cn(
                       "border-b border-gray-100 last:border-0 hover:bg-gray-50/80 transition-all group",
                       row.type === "summary" ? "bg-blue-50/20" : "",
-                      row.type === "subsummary" ? "bg-[#f8fafc]" : ""
+                      row.type === "subsummary" ? "bg-[#f8fafc]" : "",
+                      row.canCollapse ? "cursor-pointer" : ""
                     )}
+                    onClick={row.canCollapse ? () => toggleItem(row.id) : undefined}
                   >
                     <td className={cn(
                       "py-4 px-8 text-[11px] font-bold border-r border-gray-50",
@@ -719,7 +753,14 @@ export const Scheduling: React.FC = () => {
                       row.indent ? "pl-16 font-medium text-gray-500 italic" : "",
                       row.type === "milestone" ? "text-torca-azul italic" : ""
                     )}>
-                      {row.name}
+                      <div className="flex items-center gap-2">
+                        {row.canCollapse && (
+                          <span className="text-[#003366]">
+                            {collapsedItems.has(row.id) ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                          </span>
+                        )}
+                        {row.name}
+                      </div>
                     </td>
                     <td className="py-4 px-6 text-[11px] font-bold text-gray-600 text-center border-r border-gray-50">{row.duration}</td>
                     <td className="py-4 px-6 text-[11px] font-black text-[#334155] text-center border-r border-gray-50">{row.start}</td>

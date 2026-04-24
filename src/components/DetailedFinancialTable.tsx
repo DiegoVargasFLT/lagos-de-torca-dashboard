@@ -1,15 +1,126 @@
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useState } from "react";
 import { ufData } from "../data/mockData";
 import { formatCurrency, formatPercentage, cn, formatDateProject } from "../lib/utils";
 import { Card } from "./Card";
-import { TrendingUp, TrendingDown, Minus, Download, FileJson, Image as ImageIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Download, FileJson, Image as ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
 import * as ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { toPng } from "html-to-image";
 
+const ProgressIcon = ({ value }: { value: number }) => {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span className="font-bold">{formatPercentage(value)}</span>
+      <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div 
+          className={cn(
+            "h-full rounded-full transition-all duration-1000",
+            value > 90 ? "bg-emerald-500" : value > 50 ? "bg-torca-azul" : "bg-amber-500"
+          )}
+          style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const DifferenceCell = ({ progress, programmed }: { progress: number, programmed: number }) => {
+  const diff = progress - programmed;
+  let Icon = TrendingUp;
+
+  if (diff < -3) {
+    Icon = TrendingDown;
+  } else if (diff < 0) {
+    Icon = Minus;
+  }
+
+  return (
+    <div className={cn("flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg font-bold shadow-sm", 
+      diff < -3 ? "bg-red-100 text-red-800" : diff < 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+    )}>
+      <Icon size={13} strokeWidth={3} />
+      <span className="text-[11px]">{formatPercentage(diff)}</span>
+    </div>
+  );
+};
+
+interface RowProps {
+  key?: React.Key;
+  label: string;
+  values: (string | number | React.ReactNode)[];
+  isHeader?: boolean;
+  isSubHeader?: boolean;
+  className?: string;
+  onToggle?: () => void;
+  isCollapsed?: boolean;
+}
+
+const Row = ({ label, values, isHeader = false, isSubHeader = false, className = "", onToggle, isCollapsed }: RowProps) => (
+  <tr className={cn(
+    "border-b border-gray-300 transition-all group",
+    isHeader ? "bg-azul-oceano text-white font-bold" : "",
+    isSubHeader ? "bg-gray-100 text-black font-black border-l-8 border-l-torca-azul cursor-pointer hover:bg-gray-200" : "",
+    className
+  )}
+  onClick={isSubHeader ? onToggle : undefined}
+  >
+    <td 
+      colSpan={isSubHeader ? values.length + 1 : 1}
+      className={cn(
+        "py-2 px-3.5 text-[11px] transition-colors",
+        isSubHeader ? "sticky left-0 z-10 bg-inherit" : "sticky left-0 z-10 bg-white font-bold text-black border-r border-gray-400 min-w-[200px] shadow-[4px_0_10px_rgba(0,0,0,0.05)]",
+        isHeader ? "bg-azul-oceano shadow-none border-r-azul-oceano/20 text-white" : ""
+      )}
+    >
+      <span className={cn(
+        "flex items-center gap-2",
+        isSubHeader ? "pl-2 uppercase tracking-[0.2em] text-[12px] font-black" : ""
+      )}>
+        {isSubHeader && (
+          <span className="text-torca-azul">
+            {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+          </span>
+        )}
+        {label}
+      </span>
+    </td>
+    {!isSubHeader && values.map((val, i) => (
+      <td key={i} className={cn(
+        "py-2 px-3.5 text-[11px] text-center min-w-[120px] font-bold border-r border-gray-300",
+        isHeader ? "text-white" : "text-black"
+      )}>
+        {val}
+      </td>
+    ))}
+  </tr>
+);
+
 export const DetailedFinancialTable: React.FC = () => {
   const ufs = ufData;
   const tableRef = useRef<HTMLDivElement>(null);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
+  const toggleSection = (label: string) => {
+    const newCollapsed = new Set(collapsedSections);
+    if (newCollapsed.has(label)) {
+      newCollapsed.delete(label);
+    } else {
+      newCollapsed.add(label);
+    }
+    setCollapsedSections(newCollapsed);
+  };
+
+  const expandAll = () => setCollapsedSections(new Set());
+  const collapseAll = () => {
+    setCollapsedSections(new Set([
+      "Cronograma del Proyecto",
+      "Valor del Contrato",
+      "Desempeño Financiero",
+      "Gestión de Facturación",
+      "Seguimiento de Control",
+      "Facturación Realizada"
+    ]));
+  };
 
   const exportToExcel = async () => {
     const workbook = new ExcelJS.Workbook();
@@ -132,83 +243,23 @@ export const DetailedFinancialTable: React.FC = () => {
       });
   }, [tableRef]);
 
-  const ProgressIcon = ({ value }: { value: number }) => {
+  const renderSection = (title: string, contentRows: { label: string, values: (string | number | React.ReactNode)[], className?: string }[]) => {
+    const isCollapsed = collapsedSections.has(title);
     return (
-      <div className="flex flex-col items-center gap-1">
-        <span className="font-bold">{formatPercentage(value)}</span>
-        <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div 
-            className={cn(
-              "h-full rounded-full transition-all duration-1000",
-              value > 90 ? "bg-emerald-500" : value > 50 ? "bg-torca-azul" : "bg-amber-500"
-            )}
-            style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-          />
-        </div>
-      </div>
+      <>
+        <Row 
+          label={title} 
+          values={ufs.map(() => "")} 
+          isSubHeader 
+          onToggle={() => toggleSection(title)}
+          isCollapsed={isCollapsed}
+        />
+        {!isCollapsed && contentRows.map((row, idx) => (
+          <Row key={idx} label={row.label} values={row.values} className={row.className} />
+        ))}
+      </>
     );
   };
-
-  const DifferenceCell = ({ progress, programmed }: { progress: number, programmed: number }) => {
-    const diff = progress - programmed;
-    let colorClass = "text-emerald-600";
-    let Icon = TrendingUp;
-
-    if (diff < -3) {
-      colorClass = "text-red-600";
-      Icon = TrendingDown;
-    } else if (diff < 0) {
-      colorClass = "text-amber-500";
-      Icon = Minus;
-    }
-
-    return (
-      <div className={cn("flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg font-bold shadow-sm", 
-        diff < -3 ? "bg-red-100 text-red-800" : diff < 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
-      )}>
-        <Icon size={13} strokeWidth={3} />
-        <span className="text-[11px]">{formatPercentage(diff)}</span>
-      </div>
-    );
-  };
-
-  const Row = ({ label, values, isHeader = false, isSubHeader = false, className = "" }: { 
-    label: string, 
-    values: (string | number | React.ReactNode)[], 
-    isHeader?: boolean, 
-    isSubHeader?: boolean,
-    className?: string
-  }) => (
-    <tr className={cn(
-      "border-b border-gray-300 transition-all group",
-      isHeader ? "bg-azul-oceano text-white font-bold" : "",
-      isSubHeader ? "bg-gray-100 text-black font-black border-l-8 border-l-torca-azul" : "",
-      className
-    )}>
-      <td 
-        colSpan={isSubHeader ? values.length + 1 : 1}
-        className={cn(
-          "py-2 px-3.5 text-[11px] transition-colors",
-          isSubHeader ? "sticky left-0 z-10 bg-gray-100" : "sticky left-0 z-10 bg-white font-bold text-black border-r border-gray-400 min-w-[200px] shadow-[4px_0_10px_rgba(0,0,0,0.05)]",
-          isHeader ? "bg-azul-oceano shadow-none border-r-azul-oceano/20 text-white" : ""
-        )}
-      >
-        <span className={cn(
-          isSubHeader ? "pl-2 uppercase tracking-[0.2em] text-[12px] font-black" : ""
-        )}>
-          {label}
-        </span>
-      </td>
-      {!isSubHeader && values.map((val, i) => (
-        <td key={i} className={cn(
-          "py-2 px-3.5 text-[11px] text-center min-w-[120px] font-bold border-r border-gray-300",
-          isHeader ? "text-white" : "text-black"
-        )}>
-          {val}
-        </td>
-      ))}
-    </tr>
-  );
 
   return (
     <Card className="p-0 overflow-hidden border-none shadow-premium rounded-[2rem]">
@@ -218,6 +269,24 @@ export const DetailedFinancialTable: React.FC = () => {
           <p className="text-xs text-gray-700 font-bold">Consolidado estratégico por Unidad Funcional (UF)</p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mr-2 no-print">
+            <button 
+              onClick={expandAll}
+              className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-black uppercase rounded-lg transition-all"
+              title="Expandir Todo"
+            >
+              <ChevronDown size={14} />
+              Desplegar
+            </button>
+            <button 
+              onClick={collapseAll}
+              className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-black uppercase rounded-lg transition-all"
+              title="Contraer Todo"
+            >
+              <ChevronRight size={14} />
+              Contraer
+            </button>
+          </div>
           <button 
             onClick={exportToExcel}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95"
@@ -247,39 +316,47 @@ export const DetailedFinancialTable: React.FC = () => {
           <tbody>
             <Row label="CONSTRUCTOR (RAZÓN SOCIAL)" values={ufs.map(uf => uf.contractor)} isHeader className="bg-azul-oceano/90" />
             
-            <Row label="Cronograma del Proyecto" values={ufs.map(() => "")} isSubHeader />
-            <Row label="Inicio" values={ufs.map(uf => formatDateProject(uf.startDate))} />
-            <Row label="Inicio Preconstrucción" values={ufs.map(uf => formatDateProject(uf.preconstructionStart))} />
-            <Row label="Fin Preconstrucción" values={ufs.map(uf => formatDateProject(uf.preconstructionEnd))} />
-            <Row label="Inicio Construcción" values={ufs.map(uf => formatDateProject(uf.constructionStart))} />
-            <Row label="Fin Construcción" values={ufs.map(uf => formatDateProject(uf.constructionEnd))} />
+            {renderSection("Cronograma del Proyecto", [
+              { label: "Inicio", values: ufs.map(uf => formatDateProject(uf.startDate)) },
+              { label: "Inicio Preconstrucción", values: ufs.map(uf => formatDateProject(uf.preconstructionStart)) },
+              { label: "Fin Preconstrucción", values: ufs.map(uf => formatDateProject(uf.preconstructionEnd)) },
+              { label: "Inicio Construcción", values: ufs.map(uf => formatDateProject(uf.constructionStart)) },
+              { label: "Fin Construcción", values: ufs.map(uf => formatDateProject(uf.constructionEnd)) },
+            ])}
             
-            <Row label="Valor del Contrato" values={ufs.map(() => "")} isSubHeader />
-            <Row label="$ Inversión Inicial" values={ufs.map(uf => formatCurrency(uf.constructorContract.value * 0.8))} />
-            <Row label="$ Adiciones de Obra" values={ufs.map(uf => formatCurrency(uf.constructorContract.value * 0.2))} />
-            <Row label="$ Valor Final" values={ufs.map(uf => formatCurrency(uf.constructorContract.value))} className="bg-gray-50/30 font-bold" />
+            {renderSection("Valor del Contrato", [
+              { label: "$ Inversión Inicial", values: ufs.map(uf => formatCurrency(uf.constructorContract.value * 0.8)) },
+              { label: "$ Adiciones de Obra", values: ufs.map(uf => formatCurrency(uf.constructorContract.value * 0.2)) },
+              { label: "$ Valor Final", values: ufs.map(uf => formatCurrency(uf.constructorContract.value)), className: "bg-gray-50/30 font-bold" },
+            ])}
             
-            <Row label="Desempeño Financiero" values={ufs.map(() => "")} isSubHeader />
-            <Row label="$ Programado Acum." values={ufs.map(uf => formatCurrency((uf.financialProgrammed / 100) * uf.constructorContract.value))} />
-            <Row label="$ Ejecutado Real" values={ufs.map(uf => formatCurrency(uf.constructorContract.executed))} />
-            <Row label="% Programado" values={ufs.map(uf => <ProgressIcon value={uf.financialProgrammed} />)} />
-            <Row label="% Ejecutado" values={ufs.map(uf => <ProgressIcon value={uf.financialProgress} />)} />
-            <Row label="% Diferencia" values={ufs.map(uf => (
-              <DifferenceCell progress={uf.financialProgress} programmed={uf.financialProgrammed} />
-            ))} className="bg-white" />
+            {renderSection("Desempeño Financiero", [
+              { label: "$ Programado Acum.", values: ufs.map(uf => formatCurrency((uf.financialProgrammed / 100) * uf.constructorContract.value)) },
+              { label: "$ Ejecutado Real", values: ufs.map(uf => formatCurrency(uf.constructorContract.executed)) },
+              { label: "% Programado", values: ufs.map(uf => <ProgressIcon value={uf.financialProgrammed} />) },
+              { label: "% Ejecutado", values: ufs.map(uf => <ProgressIcon value={uf.financialProgress} />) },
+              { label: "% Diferencia", values: ufs.map(uf => (
+                <DifferenceCell progress={uf.financialProgress} programmed={uf.financialProgrammed} />
+              )), className: "bg-white" },
+            ])}
             
-            <Row label="Gestión de Facturación" values={ufs.map(() => "")} isSubHeader />
-            <Row label="$ Facturado" values={ufs.map(uf => formatCurrency(uf.constructorContract.invoiced))} />
-            <Row label="% Facturación" values={ufs.map(uf => <ProgressIcon value={(uf.constructorContract.invoiced / uf.constructorContract.value) * 100} />)} />
-            <Row label="$ Por Facturar" values={ufs.map(uf => formatCurrency(uf.constructorContract.executed - uf.constructorContract.invoiced))} className="text-blue-900 font-black bg-blue-50/50" />
+            {renderSection("Gestión de Facturación", [
+              { label: "$ Facturado", values: ufs.map(uf => formatCurrency(uf.constructorContract.invoiced)) },
+              { label: "% Facturación", values: ufs.map(uf => <ProgressIcon value={(uf.constructorContract.invoiced / uf.constructorContract.value) * 100} />) },
+              { label: "$ Por Facturar", values: ufs.map(uf => formatCurrency(uf.constructorContract.executed - uf.constructorContract.invoiced)), className: "text-blue-900 font-black bg-blue-50/50" },
+            ])}
             
             <Row label="INTERVENTORÍA (RAZÓN SOCIAL)" values={ufs.map(uf => uf.interventoria)} isHeader className="bg-azul-oceano/90" />
-            <Row label="Seguimiento de Control" values={ufs.map(() => "")} isSubHeader />
-            <Row label="$ Valor Contractual" values={ufs.map(uf => formatCurrency(uf.interventoriaContract.value))} />
-            <Row label="$ Ejecución Financiera" values={ufs.map(uf => formatCurrency(uf.interventoriaContract.executed))} />
-            <Row label="Facturación Realizada" values={ufs.map(() => "")} isSubHeader />
-            <Row label="$ Facturado a la fecha" values={ufs.map(uf => formatCurrency(uf.interventoriaContract.invoiced))} />
-            <Row label="% Avance Facturación" values={ufs.map(uf => <ProgressIcon value={(uf.interventoriaContract.invoiced / uf.interventoriaContract.value) * 100} />)} />
+            
+            {renderSection("Seguimiento de Control", [
+              { label: "$ Valor Contractual", values: ufs.map(uf => formatCurrency(uf.interventoriaContract.value)) },
+              { label: "$ Ejecución Financiera", values: ufs.map(uf => formatCurrency(uf.interventoriaContract.executed)) },
+            ])}
+            
+            {renderSection("Facturación Realizada", [
+              { label: "$ Facturado a la fecha", values: ufs.map(uf => formatCurrency(uf.interventoriaContract.invoiced)) },
+              { label: "% Avance Facturación", values: ufs.map(uf => <ProgressIcon value={(uf.interventoriaContract.invoiced / uf.interventoriaContract.value) * 100} />) },
+            ])}
           </tbody>
         </table>
       </div>
