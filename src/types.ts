@@ -1,3 +1,7 @@
+// =====================================================
+// TIPOS DEL DASHBOARD (Adaptados de Supabase)
+// =====================================================
+
 export type View = "resumen" | "kpi" | "costos" | "programacion" | "alertas" | "documentacion" | "configuracion" | "admin";
 
 export type UFStatus = "ok" | "warning" | "critical";

@@ -12,13 +12,57 @@ import { AdminInterface } from "./components/views/AdminInterface";
 import { DashboardProvider, useDashboard } from "./context/DashboardContext";
 import { motion, AnimatePresence } from "motion/react";
 
+type ViewType = 'resumen' | 'costos' | 'programacion' | 'alertas' | 'documentacion' | 'configuracion' | 'admin';
+
 const DashboardContent: React.FC = () => {
-  const { currentView, setCurrentView, selectedUFId, selectedUFIds } = useDashboard();
+  const { 
+    currentView, 
+    setCurrentView, 
+    selectedUFId, 
+    selectedUFIds,
+    loading,
+    error,
+    unidadesFuncionales,
+    ufSeleccionada,
+    contratos,
+    cronograma,
+    hitos,
+    fases,
+    apu,
+    curvaS,
+    actas,
+    resumenActas,
+    alertas,
+    reprogramaciones
+  } = useDashboard();
 
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
   const renderView = () => {
+    // Mostrar loading mientras se cargan los datos
+    if (loading && selectedUFId) {
+      return (
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-torca-azul border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600 font-medium">Cargando datos...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Mostrar error si hay
+    if (error) {
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <p className="text-red-800 font-semibold">Error cargando datos</p>
+          <p className="text-red-600 text-sm mt-2">{error}</p>
+        </div>
+      );
+    }
+
+    // Renderizar vista según selección
     switch (currentView) {
       case "resumen":
         return <ExecutiveSummary />;
@@ -42,7 +86,9 @@ const DashboardContent: React.FC = () => {
   const getTitle = () => {
     let ufPrefix = "";
     if (selectedUFId) {
-      ufPrefix = `[${selectedUFId}] `;
+      // Buscar el nombre de la UF seleccionada
+      const uf = unidadesFuncionales.find(u => u.id === selectedUFId);
+      ufPrefix = `[${uf?.nombre_contrato || selectedUFId}] `;
     } else if (selectedUFIds.length > 1) {
       ufPrefix = `[${selectedUFIds.length} UFs] `;
     }
@@ -70,7 +116,7 @@ const DashboardContent: React.FC = () => {
 
       <Sidebar 
         currentView={currentView} 
-        onViewChange={(view) => {
+        onViewChange={(view: ViewType) => {
           setCurrentView(view);
           setIsSidebarOpen(false);
         }} 
@@ -109,7 +155,9 @@ const DashboardContent: React.FC = () => {
                 </div>
                 <p className="text-lg font-display font-bold tracking-tight">PMO Lagos de Torca</p>
               </div>
-              <p className="text-xs text-torca-azul font-bold uppercase tracking-widest">Última actualización: 17/10/2025 | v1.0.4</p>
+              <p className="text-xs text-torca-azul font-bold uppercase tracking-widest">
+                {loading ? 'Sincronizando datos...' : `Última actualización: ${new Date().toLocaleDateString('es-CO')} | v1.0.4`}
+              </p>
             </div>
             <div className="flex gap-12 text-[10px] font-bold uppercase tracking-[0.2em]">
               <a href="#" className="hover:text-torca-azul transition-all hover:translate-y-[-2px]">Soporte Técnico</a>
@@ -118,7 +166,7 @@ const DashboardContent: React.FC = () => {
             </div>
             <div className="text-right">
               <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest">© 2024 Lagos de Torca</p>
-              <p className="text-[10px] text-white/20 mt-1">Desarrollado para la Gerencia de Proyecto</p>
+              <p className="text-[10px] text-white/20 mt-1">Desarrollado para la Gerencia de Proyecto | Conectado a Supabase ✓</p>
             </div>
           </div>
         </footer>

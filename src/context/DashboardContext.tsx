@@ -1,66 +1,221 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
-import { View, UFData } from "../types";
-import { ufData } from "../data/mockData";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  obtenerUnidadesFuncionales,
+  obtenerUFPorId,
+  obtenerContratosPorUF,
+  obtenerCronogramaPorUF,
+  obtenerHitosPorUF,
+  obtenerFasesPorUF,
+  obtenerAPUPorUF,
+  obtenerCurvaSPorUF,
+  obtenerActasPorUF,
+  obtenerResumenActasPorUF,
+  obtenerAlertasPorUF,
+  obtenerReprogramacionesPorUF,
+  suscribirseAUF,
+  suscribirseAActas
+} from '@/lib/supabaseService';
+
+type ViewType = 'resumen' | 'costos' | 'programacion' | 'alertas' | 'documentacion' | 'configuracion' | 'admin';
 
 interface DashboardContextType {
-  currentView: View;
-  setCurrentView: (view: View) => void;
+  // Navegación
+  currentView: ViewType;
+  setCurrentView: (view: ViewType) => void;
+  selectedUFId: string | null;
+  setSelectedUFId: (id: string | null) => void;
   selectedUFIds: string[];
   setSelectedUFIds: (ids: string[]) => void;
-  selectedPeriod: string;
-  setSelectedPeriod: (period: string) => void;
-  filteredUFData: UFData[];
-  isConsolidated: boolean;
-  selectedUFId: string | null;
-  selectedUF: UFData | null;
-  updateUFData: (ufId: string, patch: Partial<UFData>) => void;
+  
+  // Datos principales
+  unidadesFuncionales: any[];
+  ufSeleccionada: any;
+  contratos: any[];
+  cronograma: any[];
+  hitos: any[];
+  fases: any[];
+  apu: any[];
+  curvaS: any[];
+  actas: any[];
+  resumenActas: any;
+  alertas: any[];
+  reprogramaciones: any[];
+  
+  // Acciones
+  recargarDatos: (ufId: string) => Promise<void>;
+  
+  // Estados
+  loading: boolean;
+  error: string | null;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
 
-export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentView, setCurrentView] = useState<View>("resumen");
+export function DashboardProvider({ children }: { children: React.ReactNode }) {
+  // Navegación
+  const [currentView, setCurrentView] = useState<ViewType>('resumen');
+  const [selectedUFId, setSelectedUFId] = useState<string | null>(null);
   const [selectedUFIds, setSelectedUFIds] = useState<string[]>([]);
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("20-Oct-24");
-  const [patchedUfData, setPatchedUfData] = useState<UFData[]>(ufData);
 
-  const updateUFData = (ufId: string, patch: Partial<UFData>) => {
-    setPatchedUfData(prev => prev.map(uf => 
-      uf.id === ufId ? { ...uf, ...patch } : uf
-    ));
+  // Datos principales
+  const [unidadesFuncionales, setUnidadesFuncionales] = useState([]);
+  const [ufSeleccionada, setUFSeleccionada] = useState<any>(null);
+  const [contratos, setContratos] = useState([]);
+  const [cronograma, setCronograma] = useState([]);
+  const [hitos, setHitos] = useState([]);
+  const [fases, setFases] = useState([]);
+  const [apu, setAPU] = useState([]);
+  const [curvaS, setCurvaS] = useState([]);
+  const [actas, setActas] = useState([]);
+  const [resumenActas, setResumenActas] = useState(null);
+  const [alertas, setAlertas] = useState([]);
+  const [reprogramaciones, setReprogramaciones] = useState([]);
+  
+  // Estados
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Cargar UFs al montar
+  useEffect(() => {
+    cargarUnidadesFuncionales();
+  }, []);
+
+  // Cargar datos cuando cambia la UF seleccionada
+  useEffect(() => {
+    if (selectedUFId) {
+      recargarDatos(selectedUFId);
+    }
+  }, [selectedUFId]);
+
+  async function cargarUnidadesFuncionales() {
+    try {
+      setLoading(true);
+      const data = await obtenerUnidadesFuncionales();
+      setUnidadesFuncionales(data || []);
+      
+      // Seleccionar la primera UF por defecto
+      if (data && data.length > 0) {
+        setSelectedUFId(data[0].id);
+        setSelectedUFIds([data[0].id]);
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Error cargando proyectos';
+      setError(errorMsg);
+      console.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function recargarDatos(ufId: string) {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Cargar todos los datos en paralelo
+      const [
+        uf,
+        contratosData,
+        cronogramaData,
+        hitosData,
+        fasesData,
+        apuData,
+        curvaSData,
+        actasData,
+        resumenData,
+        alertasData,
+        reprogData
+      ] = await Promise.all([
+        obtenerUFPorId(ufId),
+        obtenerContratosPorUF(ufId),
+        obtenerCronogramaPorUF(ufId),
+        obtenerHitosPorUF(ufId),
+        obtenerFasesPorUF(ufId),
+        obtenerAPUPorUF(ufId),
+        obtenerCurvaSPorUF(ufId),
+        obtenerActasPorUF(ufId),
+        obtenerResumenActasPorUF(ufId),
+        obtenerAlertasPorUF(ufId),
+        obtenerReprogramacionesPorUF(ufId)
+      ]);
+
+      setUFSeleccionada(uf);
+      setContratos(contratosData || []);
+      setCronograma(cronogramaData || []);
+      setHitos(hitosData || []);
+      setFases(fasesData || []);
+      setAPU(apuData || []);
+      setCurvaS(curvaSData || []);
+      setActas(actasData || []);
+      setResumenActas(resumenData);
+      setAlertas(alertasData || []);
+      setReprogramaciones(reprogData || []);
+
+      // Suscribirse a cambios en tiempo real
+      const subUF = suscribirseAUF(ufId, () => {
+        recargarDatos(ufId);
+      });
+
+      const subActas = suscribirseAActas(ufId, () => {
+        recargarDatos(ufId);
+      });
+
+      // Cleanup de subscripciones
+      return () => {
+        subUF.unsubscribe();
+        subActas.unsubscribe();
+      };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Error cargando datos';
+      setError(errorMsg);
+      console.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const value: DashboardContextType = {
+    // Navegación
+    currentView,
+    setCurrentView,
+    selectedUFId,
+    setSelectedUFId,
+    selectedUFIds,
+    setSelectedUFIds,
+    
+    // Datos
+    unidadesFuncionales,
+    ufSeleccionada,
+    contratos,
+    cronograma,
+    hitos,
+    fases,
+    apu,
+    curvaS,
+    actas,
+    resumenActas,
+    alertas,
+    reprogramaciones,
+    
+    // Acciones
+    recargarDatos,
+    
+    // Estados
+    loading,
+    error
   };
 
-  const filteredUFData = selectedUFIds.length === 0 
-    ? patchedUfData 
-    : patchedUfData.filter(uf => selectedUFIds.includes(uf.id));
-
-  const isConsolidated = selectedUFIds.length === 0 || selectedUFIds.length > 1;
-  const selectedUFId = selectedUFIds.length === 1 ? selectedUFIds[0] : null;
-  const selectedUF = selectedUFIds.length === 1 ? filteredUFData[0] : null;
-
   return (
-    <DashboardContext.Provider value={{
-      currentView,
-      setCurrentView,
-      selectedUFIds,
-      setSelectedUFIds,
-      selectedPeriod,
-      setSelectedPeriod,
-      filteredUFData,
-      isConsolidated,
-      selectedUFId,
-      selectedUF,
-      updateUFData
-    }}>
+    <DashboardContext.Provider value={value}>
       {children}
     </DashboardContext.Provider>
   );
-};
+}
 
-export const useDashboard = () => {
+export function useDashboard() {
   const context = useContext(DashboardContext);
-  if (context === undefined) {
-    throw new Error("useDashboard must be used within a DashboardProvider");
+  if (!context) {
+    throw new Error('useDashboard debe usarse dentro de DashboardProvider');
   }
   return context;
-};
+}
