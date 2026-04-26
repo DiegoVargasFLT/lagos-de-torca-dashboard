@@ -238,8 +238,8 @@ export const fetchGlobalStats = async (ufData: UFData[]): Promise<GlobalStats> =
 
 export const fetchAllAlerts = async (): Promise<Alert[]> => {
   try {
-    // Esta función se implementará completamente cuando se tenga la conexión a Supabase
-    return [];
+    const alertas = await obtenerAlertasPorUF(); // Esta función necesita un ID de UF
+    return mapAlerts(alertas);
   } catch (error) {
     console.error('Error fetching alerts:', error);
     return [];
