@@ -638,8 +638,8 @@ export const ExecutiveSummary: React.FC = () => {
               </a>
             </div>
           </div>
-        </Card>
-      </div>
+</div>
+        </div>
 
       {/* Detailed Financial Matrix Section */}
       <div className="space-y-6">
