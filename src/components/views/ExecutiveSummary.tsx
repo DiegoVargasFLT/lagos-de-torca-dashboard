@@ -613,9 +613,6 @@ export const ExecutiveSummary: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
         </div>
       </AnimatePresence>
             <div className="absolute top-6 right-6 z-20 flex flex-col gap-3">
