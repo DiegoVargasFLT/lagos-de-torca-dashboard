@@ -406,7 +406,7 @@ export const ExecutiveSummary: React.FC = () => {
                           </thead>
                           <tbody className="divide-y divide-gray-50">
                             {/* For consolidated view, we might want to show global stats or a general breakdown */}
-                            {filteredUFData.slice(0, 5).map((uf, i) => (
+                            {unidadesFuncionales.slice(0, 5).map((uf, i) => (
                               <tr key={i} className="group hover:bg-gray-50/50 transition-colors">
                                 <td className="py-6 px-4">
                                   <p className="font-display font-bold text-sm text-violeta-dark">{uf.name}</p>
@@ -572,16 +572,16 @@ export const ExecutiveSummary: React.FC = () => {
                   <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={[
-                        { 
-                          name: "Constructor", 
-                          Ejecutado: selectedUF ? selectedUF.constructorContract.executed : filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.executed, 0),
-                          Facturado: selectedUF ? selectedUF.constructorContract.invoiced : filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.invoiced, 0),
-                        },
-                        { 
-                          name: "Interventoría", 
-                          Ejecutado: selectedUF ? selectedUF.interventoriaContract.executed : filteredUFData.reduce((acc, uf) => acc + uf.interventoriaContract.executed, 0),
-                          Facturado: selectedUF ? selectedUF.interventoriaContract.invoiced : filteredUFData.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0),
-                        },
+{ 
+                      name: "Constructor", 
+                      Ejecutado: selectedUF ? selectedUF.constructorContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.constructorContract.executed, 0),
+                      Facturado: selectedUF ? selectedUF.constructorContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.constructorContract.invoiced, 0),
+                    },
+                    { 
+                      name: "Interventoría", 
+                      Ejecutado: selectedUF ? selectedUF.interventoriaContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.executed, 0),
+                      Facturado: selectedUF ? selectedUF.interventoriaContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0),
+                    },
                       ]} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} dy={10} />
@@ -598,16 +598,15 @@ export const ExecutiveSummary: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                   <div className="mt-10 grid grid-cols-2 gap-4">
-                    <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+<div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50">
                       <p className="text-[10px] font-bold text-blue-700 uppercase tracking-tight mb-1">Eficiencia Constructor</p>
                       <p className="text-xl font-display font-bold text-blue-900">
-                        {formatPercentage(((selectedUF ? selectedUF.constructorContract.invoiced : filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.invoiced, 0)) / (selectedUF ? selectedUF.constructorContract.executed : filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.executed, 0)) * 100) || 0)}
-                      </p>
+                        {formatPercentage(((selectedUF ? selectedUF.constructorContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.constructorContract.invoiced, 0)) / (selectedUF ? selectedUF.constructorContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.constructorContract.executed, 0)) * 100) || 0)}
                     </div>
                     <div className="p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100/50">
                       <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-tight mb-1">Eficiencia Interventoría</p>
                       <p className="text-xl font-display font-bold text-emerald-900">
-                        {formatPercentage(((selectedUF ? selectedUF.interventoriaContract.invoiced : filteredUFData.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0)) / (selectedUF ? selectedUF.interventoriaContract.executed : filteredUFData.reduce((acc, uf) => acc + uf.interventoriaContract.executed, 0)) * 100) || 0)}
+                        {formatPercentage(((selectedUF ? selectedUF.interventoriaContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0)) / (selectedUF ? selectedUF.interventoriaContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.executed, 0)) * 100) || 0)}
                       </p>
                     </div>
                   </div>
@@ -904,7 +903,7 @@ export const ExecutiveSummary: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {ufData.map((uf, i) => {
+          {filteredUFData.map((uf, i) => (
             const isSelected = selectedUFIds.includes(uf.id);
             return (
               <motion.div
