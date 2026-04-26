@@ -74,6 +74,15 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [alertas, setAlertas] = useState([]);
   const [reprogramaciones, setReprogramaciones] = useState([]);
   
+  // Datos filtrados
+  const filteredUFData = React.useMemo(() => {
+    if (selectedUFId && unidadesFuncionales.length > 0) {
+      const selectedUF = unidadesFuncionales.find(uf => uf.id === selectedUFId);
+      return selectedUF ? [selectedUF] : [];
+    }
+    return unidadesFuncionales;
+  }, [unidadesFuncionales, selectedUFId]);
+  
   // Estados
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -201,9 +210,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     reprogramaciones,
     
     // Datos filtrados
-    filteredUFData: selectedUFId 
-      ? [unidadesFuncionales.find(uf => uf.id === selectedUFId) || ufSeleccionada].filter(Boolean)
-      : unidadesFuncionales,
+    filteredUFData,
     
     // Acciones
     recargarDatos,
