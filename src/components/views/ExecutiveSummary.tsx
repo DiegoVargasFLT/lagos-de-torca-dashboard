@@ -95,7 +95,7 @@ export const ExecutiveSummary: React.FC = () => {
   const selectedUF = selectedUFIds.length === 1 ? 
     unidadesFuncionales.find(uf => uf.id === selectedUFIds[0]) : null;
 
-  // Consolidated S-Curve for construction phase - SUM money values then derive percentage
+// Consolidated S-Curve for construction phase - SUM money values then derive percentage
   const consolidatedSCurve = React.useMemo(() => {
     if (!unidadesFuncionales || unidadesFuncionales.length === 0) return [];
     
@@ -103,8 +103,7 @@ export const ExecutiveSummary: React.FC = () => {
     const totalGlobalValue = unidadesFuncionales.reduce((acc, uf) => 
       acc + (uf.constructorContract?.value || 0) + (uf.interventoriaContract?.value || 0), 0);
 
-    unidadesFuncionales.forEach(uf => {
-      const ufTotalVal = (uf.constructorContract?.value || 0) + (uf.interventoriaContract?.value || 0);
+    unidadesFuncionales.forEach((uf: any) => {
       // Usar curvaS o constructionSCurve dependiendo de qué datos estén disponibles
       const curveData = uf.constructionSCurve || uf.curvaS || [];
       
@@ -123,6 +122,7 @@ export const ExecutiveSummary: React.FC = () => {
             invoicedMoney: 0
           };
         }
+        const ufTotalVal = (uf.constructorContract?.value || 0) + (uf.interventoriaContract?.value || 0);
         points[i].programmedMoney += ((p.programmed || 0) / 100) * ufTotalVal;
         points[i].programmedInitialMoney += (((p.programmedInitial || p.programmed) || 0) / 100) * ufTotalVal;
         points[i].reprogramming1Money += (((p.reprogramming1 || p.programmedInitial || p.programmed) || 0) / 100) * ufTotalVal;
@@ -137,66 +137,17 @@ export const ExecutiveSummary: React.FC = () => {
 
     return points.map(p => ({
       ...p,
-      programmed: (p.programmedMoney / totalGlobalValue) * 100,
-      programmedInitial: (p.programmedInitialMoney / totalGlobalValue) * 100,
-      reprogramming1: (p.reprogramming1Money / totalGlobalValue) * 100,
-      reprogramming2: (p.reprogramming2Money / totalGlobalValue) * 100,
-      reprogramming3: (p.reprogramming3Money / totalGlobalValue) * 100,
-      reprogramming4: (p.reprogramming4Money / totalGlobalValue) * 100,
-      reprogramming5: (p.reprogramming5Money / totalGlobalValue) * 100,
-      executed: (p.executedMoney / totalGlobalValue) * 100,
-      invoiced: (p.invoicedMoney / totalGlobalValue) * 100,
+      programmed: totalGlobalValue > 0 ? (p.programmedMoney / totalGlobalValue) * 100 : 0,
+      programmedInitial: totalGlobalValue > 0 ? (p.programmedInitialMoney / totalGlobalValue) * 100 : 0,
+      reprogramming1: totalGlobalValue > 0 ? (p.reprogramming1Money / totalGlobalValue) * 100 : 0,
+      reprogramming2: totalGlobalValue > 0 ? (p.reprogramming2Money / totalGlobalValue) * 100 : 0,
+      reprogramming3: totalGlobalValue > 0 ? (p.reprogramming3Money / totalGlobalValue) * 100 : 0,
+      reprogramming4: totalGlobalValue > 0 ? (p.reprogramming4Money / totalGlobalValue) * 100 : 0,
+      reprogramming5: totalGlobalValue > 0 ? (p.reprogramming5Money / totalGlobalValue) * 100 : 0,
+      executed: totalGlobalValue > 0 ? (p.executedMoney / totalGlobalValue) * 100 : 0,
+      invoiced: totalGlobalValue > 0 ? (p.invoicedMoney / totalGlobalValue) * 100 : 0,
     })).filter(p => p); // Filtrar valores undefined
   }, [unidadesFuncionales]);
-
-  // Consolidated S-Curve for construction phase - SUM money values then derive percentage
-  const consolidatedSCurve = React.useMemo(() => {
-    const points: any[] = [];
-    const totalGlobalValue = filteredUFData.reduce((acc, uf) => 
-      acc + uf.constructorContract.value + uf.interventoriaContract.value, 0);
-
-    filteredUFData.forEach(uf => {
-      const ufTotalVal = uf.constructorContract.value + uf.interventoriaContract.value;
-      uf.constructionSCurve.forEach((p, i) => {
-        if (!points[i]) {
-          points[i] = { 
-            month: p.month, 
-            programmedMoney: 0, 
-            programmedInitialMoney: 0,
-            reprogramming1Money: 0,
-            reprogramming2Money: 0,
-            reprogramming3Money: 0,
-            reprogramming4Money: 0,
-            reprogramming5Money: 0,
-            executedMoney: 0,
-            invoicedMoney: 0
-          };
-        }
-        points[i].programmedMoney += (p.programmed / 100) * ufTotalVal;
-        points[i].programmedInitialMoney += ((p.programmedInitial || p.programmed) / 100) * ufTotalVal;
-        points[i].reprogramming1Money += ((p.reprogramming1 || p.programmedInitial || p.programmed) / 100) * ufTotalVal;
-        points[i].reprogramming2Money += ((p.reprogramming2 || p.reprogramming1 || p.programmedInitial || p.programmed) / 100) * ufTotalVal;
-        points[i].reprogramming3Money += ((p.reprogramming3 || p.reprogramming2 || p.reprogramming1 || p.programmedInitial || p.programmed) / 100) * ufTotalVal;
-        points[i].reprogramming4Money += ((p.reprogramming4 || p.reprogramming3 || p.reprogramming2 || p.reprogramming1 || p.programmedInitial || p.programmed) / 100) * ufTotalVal;
-        points[i].reprogramming5Money += ((p.reprogramming5 || p.reprogramming4 || p.reprogramming3 || p.reprogramming2 || p.reprogramming1 || p.programmedInitial || p.programmed) / 100) * ufTotalVal;
-        points[i].executedMoney += (p.executed / 100) * ufTotalVal;
-        points[i].invoicedMoney += (p.invoiced / 100) * ufTotalVal;
-      });
-    });
-
-    return points.map(p => ({
-      ...p,
-      programmed: (p.programmedMoney / totalGlobalValue) * 100,
-      programmedInitial: (p.programmedInitialMoney / totalGlobalValue) * 100,
-      reprogramming1: (p.reprogramming1Money / totalGlobalValue) * 100,
-      reprogramming2: (p.reprogramming2Money / totalGlobalValue) * 100,
-      reprogramming3: (p.reprogramming3Money / totalGlobalValue) * 100,
-      reprogramming4: (p.reprogramming4Money / totalGlobalValue) * 100,
-      reprogramming5: (p.reprogramming5Money / totalGlobalValue) * 100,
-      executed: (p.executedMoney / totalGlobalValue) * 100,
-      invoiced: (p.invoicedMoney / totalGlobalValue) * 100,
-    }));
-  }, [filteredUFData]);
 
   const markers = React.useMemo(() => {
     let rawMarkers = [];
