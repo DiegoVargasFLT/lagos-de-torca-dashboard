@@ -33,19 +33,19 @@ import { motion, AnimatePresence } from "motion/react";
 import { exportAsImage } from "../../lib/exportUtils";
 
 export const CostControl: React.FC = () => {
-  const { selectedUFId, filteredUFData, selectedUF } = useDashboard();
+  const { selectedUFId, unidadesFuncionales, selectedUF } = useDashboard();
   const [activeDashboard, setActiveDashboard] = React.useState<"constructor" | "interventoria">("constructor");
   const reportRef = React.useRef<HTMLDivElement>(null);
 
-  const totalContractual = filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.value + uf.interventoriaContract.value, 0);
-  const totalExecuted = filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.executed + uf.interventoriaContract.executed, 0);
-  const totalInvoiced = filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.invoiced + uf.interventoriaContract.invoiced, 0);
+  const totalContractual = unidadesFuncionales.reduce((acc, uf) => acc + (uf.constructorContract?.value || 0) + (uf.interventoriaContract?.value || 0), 0);
+  const totalExecuted = unidadesFuncionales.reduce((acc, uf) => acc + (uf.constructorContract?.executed || 0) + (uf.interventoriaContract?.executed || 0), 0);
+  const totalInvoiced = unidadesFuncionales.reduce((acc, uf) => acc + (uf.constructorContract?.invoiced || 0) + (uf.interventoriaContract?.invoiced || 0), 0);
 
   const financialStats = [
     { label: "Presupuesto Total", value: formatCurrency(totalContractual), icon: Wallet, color: "text-torca-azul", bg: "bg-torca-azul/10" },
     { label: "Valor Ejecutado", value: formatCurrency(totalExecuted), icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Facturado Constructor", value: formatCurrency(filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.invoiced, 0)), icon: Receipt, color: "text-violeta-dark", bg: "bg-violeta-aereo/10" },
-    { label: "Facturado Interventoría", value: formatCurrency(filteredUFData.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0)), icon: Receipt, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Facturado Constructor", value: formatCurrency(unidadesFuncionales.reduce((acc, uf) => acc + (uf.constructorContract?.invoiced || 0), 0)), icon: Receipt, color: "text-violeta-dark", bg: "bg-violeta-aereo/10" },
+    { label: "Facturado Interventoría", value: formatCurrency(unidadesFuncionales.reduce((acc, uf) => acc + (uf.interventoriaContract?.invoiced || 0), 0)), icon: Receipt, color: "text-blue-600", bg: "bg-blue-50" },
   ];
 
   return (
