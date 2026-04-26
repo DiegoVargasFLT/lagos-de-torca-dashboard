@@ -14,7 +14,7 @@ import {
   obtenerReprogramacionesPorUF,
   suscribirseAUF,
   suscribirseAActas
-} from '@/lib/supabaseService';
+} from '../lib/supabaseService';
 
 type ViewType = 'resumen' | 'costos' | 'programacion' | 'alertas' | 'documentacion' | 'configuracion' | 'admin';
 
