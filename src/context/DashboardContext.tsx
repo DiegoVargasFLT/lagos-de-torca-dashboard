@@ -41,6 +41,9 @@ interface DashboardContextType {
   alertas: any[];
   reprogramaciones: any[];
   
+  // Datos filtrados
+  filteredUFData: any[];
+  
   // Acciones
   recargarDatos: (ufId: string) => Promise<void>;
   
@@ -196,6 +199,11 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     resumenActas,
     alertas,
     reprogramaciones,
+    
+    // Datos filtrados
+    filteredUFData: selectedUFId 
+      ? [unidadesFuncionales.find(uf => uf.id === selectedUFId) || ufSeleccionada].filter(Boolean)
+      : unidadesFuncionales,
     
     // Acciones
     recargarDatos,
