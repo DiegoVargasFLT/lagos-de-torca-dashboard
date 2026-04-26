@@ -294,6 +294,7 @@ export const ExecutiveSummary: React.FC = () => {
                     <div>
                       <p className="text-[10px] font-bold text-white uppercase tracking-widest">Interventoría</p>
                       <p className="text-sm font-semibold text-white">{selectedUF.interventoria}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
