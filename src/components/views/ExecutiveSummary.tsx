@@ -152,26 +152,26 @@ export const ExecutiveSummary: React.FC = () => {
   const markers = React.useMemo(() => {
     let rawMarkers = [];
     if (selectedUF) rawMarkers = selectedUF.reprogrammingMarkers || [];
-    else rawMarkers = filteredUFData[0]?.reprogrammingMarkers || [];
+    else rawMarkers = unidadesFuncionales[0]?.reprogrammingMarkers || [];
     return [...rawMarkers].sort((a, b) => a.month.localeCompare(b.month));
-  }, [selectedUF, filteredUFData]);
+  }, [selectedUF, unidadesFuncionales]);
 
   // Calculate key milestone dates
   const lifecycleDates = React.useMemo(() => {
-    if (filteredUFData.length === 0) return null;
+    if (unidadesFuncionales.length === 0) return null;
 
     const findMin = (arr: Date[]) => new Date(Math.min(...arr.map(d => d.getTime())));
     const findMax = (arr: Date[]) => new Date(Math.max(...arr.map(d => d.getTime())));
     const formatDate = (d: Date) => d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
     const data = {
-      projectStart: findMin(filteredUFData.map(uf => new Date(uf.startDate))),
-      preconStart: findMin(filteredUFData.map(uf => new Date(uf.preconstructionStart))),
-      preconEnd: findMax(filteredUFData.map(uf => new Date(uf.preconstructionEnd))),
-      constStart: findMin(filteredUFData.map(uf => new Date(uf.constructionStart))),
-      constEnd: findMax(filteredUFData.map(uf => new Date(uf.constructionEnd))),
-      beneficiaries: findMax(filteredUFData.map(uf => new Date(uf.beneficiariesDate))),
-      liquidation: findMax(filteredUFData.map(uf => new Date(uf.liquidationEnd)))
+      projectStart: findMin(unidadesFuncionales.map(uf => new Date(uf.startDate))),
+      preconStart: findMin(unidadesFuncionales.map(uf => new Date(uf.preconstructionStart))),
+      preconEnd: findMax(unidadesFuncionales.map(uf => new Date(uf.preconstructionEnd))),
+      constStart: findMin(unidadesFuncionales.map(uf => new Date(uf.constructionStart))),
+      constEnd: findMax(unidadesFuncionales.map(uf => new Date(uf.constructionEnd))),
+      beneficiaries: findMax(unidadesFuncionales.map(uf => new Date(uf.beneficiariesDate))),
+      liquidation: findMax(unidadesFuncionales.map(uf => new Date(uf.liquidationEnd)))
     };
 
     return {
@@ -184,7 +184,7 @@ export const ExecutiveSummary: React.FC = () => {
       liquidation: formatDate(data.liquidation),
       corte: formatDate(new Date()) 
     };
-  }, [filteredUFData]);
+  }, [unidadesFuncionales]);
 
   const billingStats = React.useMemo(() => {
     if (selectedUF) return {
@@ -193,35 +193,35 @@ export const ExecutiveSummary: React.FC = () => {
       pendAmortizar: selectedUF.anticipoGirado - selectedUF.anticipoAmortizado
     };
     return {
-      girado: filteredUFData.reduce((acc, uf) => acc + uf.anticipoGirado, 0),
-      amortizado: filteredUFData.reduce((acc, uf) => acc + uf.anticipoAmortizado, 0),
-      pendAmortizar: filteredUFData.reduce((acc, uf) => acc + (uf.anticipoGirado - uf.anticipoAmortizado), 0)
+      girado: unidadesFuncionales.reduce((acc, uf) => acc + (uf.anticipoGirado || 0), 0),
+      amortizado: unidadesFuncionales.reduce((acc, uf) => acc + (uf.anticipoAmortizado || 0), 0),
+      pendAmortizar: unidadesFuncionales.reduce((acc, uf) => acc + ((uf.anticipoGirado || 0) - (uf.anticipoAmortizado || 0)), 0)
     };
-  }, [selectedUF, filteredUFData]);
+  }, [selectedUF, unidadesFuncionales]);
 
   const allMilestones = React.useMemo(() => {
-    return filteredUFData.flatMap(uf => uf.milestones.map(m => ({ ...m, ufName: uf.name })))
+    return unidadesFuncionales.flatMap(uf => (uf.milestones || []).map(m => ({ ...m, ufName: uf.name })))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [filteredUFData]);
+  }, [unidadesFuncionales]);
 
   const chartData = React.useMemo(() => {
-    const baseData = selectedUF ? selectedUF.constructionSCurve : consolidatedSCurve;
+    const baseData = selectedUF ? (selectedUF.constructionSCurve || selectedUF.curvaS || []) : consolidatedSCurve;
     const totalVal = selectedUF 
-      ? (selectedUF.constructorContract.value + selectedUF.interventoriaContract.value)
-      : filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.value + uf.interventoriaContract.value, 0);
+      ? ((selectedUF.constructorContract?.value || 0) + (selectedUF.interventoriaContract?.value || 0))
+      : unidadesFuncionales.reduce((acc, uf) => acc + (uf.constructorContract?.value || 0) + (uf.interventoriaContract?.value || 0), 0);
 
     const m = markers.map(marker => marker.month);
 
-    return baseData.map(point => {
-      const pInitialMoney = ((point.programmedInitial || point.programmed) / 100) * totalVal;
-      const r1Money = ((point.reprogramming1 || point.reprogramming5 || point.programmed) / 100) * totalVal;
-      const r2Money = ((point.reprogramming2 || point.reprogramming5 || point.programmed) / 100) * totalVal;
-      const r3Money = ((point.reprogramming3 || point.reprogramming5 || point.programmed) / 100) * totalVal;
-      const r4Money = ((point.reprogramming4 || point.reprogramming5 || point.programmed) / 100) * totalVal;
-      const r5Money = ((point.reprogramming5 || point.programmed) / 100) * totalVal;
+    return (baseData || []).map(point => {
+      const pInitialMoney = (((point.programmedInitial || point.programmed) || 0) / 100) * totalVal;
+      const r1Money = (((point.reprogramming1 || point.reprogramming5 || point.programmed) || 0) / 100) * totalVal;
+      const r2Money = (((point.reprogramming2 || point.reprogramming5 || point.programmed) || 0) / 100) * totalVal;
+      const r3Money = (((point.reprogramming3 || point.reprogramming5 || point.programmed) || 0) / 100) * totalVal;
+      const r4Money = (((point.reprogramming4 || point.reprogramming5 || point.programmed) || 0) / 100) * totalVal;
+      const r5Money = (((point.reprogramming5 || point.programmed) || 0) / 100) * totalVal;
 
-      const executedMoney = (point.executed / 100) * totalVal;
-      const invoicedMoney = (point.invoiced / 100) * totalVal;
+      const executedMoney = ((point.executed || 0) / 100) * totalVal;
+      const invoicedMoney = ((point.invoiced || 0) / 100) * totalVal;
 
       const currentMonth = point.month;
       
@@ -245,7 +245,7 @@ export const ExecutiveSummary: React.FC = () => {
         r5Money: (m[4] && currentMonth >= m[4]) ? r5Money : undefined,
       };
     });
-  }, [selectedUF, consolidatedSCurve, filteredUFData, markers]);
+  }, [selectedUF, consolidatedSCurve, unidadesFuncionales, markers]);
 
   if (selectedUF) {
     return (
