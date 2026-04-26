@@ -597,11 +597,12 @@ export const ExecutiveSummary: React.FC = () => {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="mt-10 grid grid-cols-2 gap-4">
-<div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+<div className="mt-10 grid grid-cols-2 gap-4">
+                    <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50">
                       <p className="text-[10px] font-bold text-blue-700 uppercase tracking-tight mb-1">Eficiencia Constructor</p>
                       <p className="text-xl font-display font-bold text-blue-900">
                         {formatPercentage(((selectedUF ? selectedUF.constructorContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.constructorContract.invoiced, 0)) / (selectedUF ? selectedUF.constructorContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.constructorContract.executed, 0)) * 100) || 0)}
+                      </p>
                     </div>
                     <div className="p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100/50">
                       <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-tight mb-1">Eficiencia Interventoría</p>
@@ -610,258 +611,18 @@ export const ExecutiveSummary: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "alertas" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {selectedUF.alerts.length > 0 ? (
-                selectedUF.alerts.map((alert) => (
-                  <motion.div
-                    key={alert.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                  >
-                    <div className="premium-card p-8 border-l-8 border-l-amber-500 bg-white group hover:shadow-2xl transition-all">
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl group-hover:scale-110 transition-transform">
-                          <AlertTriangle size={24} />
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">{alert.date}</span>
-                      </div>
-                      <h4 className="text-lg font-display font-bold text-violeta-dark mb-3">{alert.title}</h4>
-                      <p className="text-sm text-gray-500 mb-6 leading-relaxed font-medium">{alert.description}</p>
-                      <div className="pt-6 border-t border-gray-50">
-                        <p className="text-[10px] font-bold uppercase text-amber-700 tracking-widest mb-2">Impacto Estratégico</p>
-                        <p className="text-xs font-bold text-gray-700 leading-relaxed">{alert.impact}</p>
-                      </div>
+                    <div className="p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100/50">
+                      <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-tight mb-1">Eficiencia Interventoría</p>
+                      <p className="text-xl font-display font-bold text-emerald-900">
+                        {formatPercentage(((selectedUF ? selectedUF.interventoriaContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0)) / (selectedUF ? selectedUF.interventoriaContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.executed, 0)) * 100) || 0)}
+</p>
                     </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="col-span-full py-32 flex flex-col items-center justify-center text-gray-300">
-                  <div className="w-24 h-24 rounded-full bg-emerald-50 flex items-center justify-center mb-6">
-                    <CheckCircle2 size={48} className="text-emerald-500 opacity-40" />
-                  </div>
-                  <p className="font-display font-bold uppercase tracking-[0.3em] text-sm">Sin Alertas Críticas</p>
-                  <p className="text-xs font-medium mt-2">Todo el sistema opera bajo parámetros normales</p>
-                </div>
-              )}
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Media Section */}
-      <div className="premium-card p-10">
-          <div className="flex justify-between items-end mb-10">
-            <div>
-              <h3 className="text-2xl font-display font-bold text-violeta-dark tracking-tight flex items-center gap-4">
-                <div className="p-2 bg-torca-azul/10 rounded-xl text-torca-azul">
-                  <Camera size={24} />
-                </div>
-                Registro Visual
-              </h3>
-              <p className="text-sm text-gray-500 font-medium mt-1">Evidencia fotográfica y video frentes de obra</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {selectedUF.media.photos.map((photo, i) => (
-              <motion.div 
-                key={i} 
-                className="group relative rounded-[2rem] overflow-hidden aspect-video bg-gray-100 shadow-premium"
-                whileHover={{ y: -5 }}
-              >
-                <img 
-                  src={photo} 
-                  alt={`Estado UF ${i+1}`} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-violeta-dark/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end p-8">
-                  <div>
-                    <p className="text-white text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Vista de Obra</p>
-                    <p className="text-white/70 text-xs font-medium">Octubre 2024 - Frente Principal</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-            {selectedUF.media.videos.map((video, i) => (
-              <motion.div 
-                key={i} 
-                className="relative rounded-[2rem] overflow-hidden aspect-video bg-violeta-dark flex items-center justify-center group shadow-premium"
-                whileHover={{ y: -5 }}
-              >
-                <video className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity">
-                  <source src={video} type="video/mp4" />
-                </video>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center text-white border border-white/20 cursor-pointer hover:scale-110 hover:bg-torca-azul hover:text-violeta-dark transition-all duration-500 shadow-2xl">
-                    <Video size={28} />
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Consolidated View
-  return (
-    <div className="space-y-10">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-        <div>
-          <h2 className="text-3xl font-display font-bold text-violeta-dark tracking-tight">Centro de Control</h2>
-          <p className="text-sm text-gray-500 font-medium">Panel consolidado de gestión y seguimiento Lagos de Torca</p>
-        </div>
-      </div>
-
-      {/* Bento Grid Stats */}
-      <div className="bento-grid">
-        {/* Main KPI - Large Card */}
-        <motion.div 
-          className="md:col-span-6 lg:col-span-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="premium-card p-8 h-full bg-gradient-to-br from-violeta-dark to-violeta-aereo text-white relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-              <TrendingUp size={120} />
-            </div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-torca-azul mb-2">Avance Económico Global</p>
-            <h3 className="text-5xl font-display font-bold mb-6 text-white">{formatPercentage(stats?.globalExecution || 0)}</h3>
-            <div className="space-y-4 relative z-10">
-              <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden">
-                <motion.div 
-                  className="bg-gradient-to-r from-torca-azul to-rio-verde h-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${stats?.globalExecution || 0}%` }}
-                  transition={{ duration: 1.5, ease: "easeOut" }}
-                />
-              </div>
-              <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-white/80">
-                <span>Programado: 42.5%</span>
-                <span className="text-torca-azul font-black">Desviación: -2.1%</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Financial Summary - Medium Card */}
-        <motion.div 
-          className="md:col-span-6 lg:col-span-5"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <div className="premium-card p-8 h-full flex flex-col justify-between">
-            <div>
-              <div className="flex justify-between items-start mb-6">
-                <div className="p-3 bg-blue-50 rounded-2xl text-blue-600">
-                  <Wallet size={24} />
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Presupuesto Total</p>
-                  <p className="text-2xl font-display font-bold text-violeta-dark">{formatCurrency(stats?.totalContractual || 0)}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                  <span className="text-xs font-bold text-gray-700 uppercase tracking-tight">Ejecutado</span>
-                  <span className="text-sm font-bold text-violeta-dark">{formatCurrency(stats?.totalExecuted || 0)}</span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/50">
-                  <span className="text-xs font-bold text-emerald-700 uppercase tracking-tight">Pendiente</span>
-                  <span className="text-sm font-bold text-emerald-800">{formatCurrency((stats?.totalContractual || 0) - (stats?.totalExecuted || 0))}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Small Stats - Column */}
-        <motion.div 
-          className="md:col-span-12 lg:col-span-3 flex flex-col gap-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="premium-card p-6 flex-1 flex items-center gap-4">
-            <div className="p-3 bg-amber-50 rounded-2xl text-amber-600">
-              <LayoutDashboard size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Unidades Activas</p>
-              <p className="text-xl font-display font-bold text-violeta-dark">{stats?.activeUFs || 0} / {stats?.totalUFs || 0}</p>
-            </div>
-          </div>
-          <div className="premium-card p-6 flex-1 flex items-center gap-4">
-            <div className="p-3 bg-purple-50 rounded-2xl text-purple-600">
-              <ShieldAlert size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Alertas Críticas</p>
-              <p className="text-xl font-display font-bold text-violeta-dark">03</p>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Main Charts Section - Map Only */}
-      <div className="grid grid-cols-1 gap-8">
-        <Card className="p-0 overflow-hidden border-none shadow-premium rounded-[2.5rem]">
-          <div className="p-8 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
-            <div>
-              <h3 className="text-xl font-display font-bold text-violeta-dark">Mapa de Intervención Estratégica</h3>
-              <p className="text-xs text-gray-500 font-medium">Localización y estado de frentes de obra activos</p>
-            </div>
-            <div className="flex gap-6">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-torca-azul shadow-[0_0_10px_rgba(97,177,227,0.5)]" />
-                <span className="text-[10px] font-bold uppercase text-gray-500 tracking-wider">Ejecución OK</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
-                <span className="text-[10px] font-bold uppercase text-gray-500 tracking-wider">En Alerta</span>
-              </div>
-            </div>
-          </div>
-          <div className="relative w-full h-[500px] overflow-hidden rounded-xl shadow-lg group/map bg-slate-100">
-            {/* Background placeholder for loading state */}
-            <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/map-pattern/1920/1080?blur=10')] bg-cover bg-center opacity-10" />
-            
-            <iframe 
-              src="https://www.google.com/maps/d/embed?mid=1qaBGL3U1L4IxtPmtckJsT2JzveDd_FM" 
-              width="100%" 
-              height="580px" 
-              style={{ 
-                position: 'absolute', 
-                top: '-70px', 
-                left: 0, 
-                border: 0 
-              }} 
-              allowFullScreen
-              loading="lazy"
-              title="Mapa de Gestión - Lagos de Torca"
-              className="relative z-10"
-            />
-
-            {/* Premium Legend Overlay */}
-            <div className="absolute bottom-6 left-6 z-20 max-w-[320px] glass-card p-6 rounded-[2rem] border border-white/20 shadow-2xl backdrop-blur-xl pointer-events-none transition-all duration-500 group-hover/map:translate-y-[-10px]">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-1.5 bg-torca-azul/20 rounded-lg text-torca-azul">
-                  <Globe size={14} />
-                </div>
-                <p className="text-[9px] font-bold text-violeta-dark uppercase tracking-widest">Geoportal Territorio</p>
-              </div>
-              <p className="text-[11px] text-gray-900 leading-relaxed font-bold">
-                Visualización optimizada de áreas de gestión. Explore las capas de información técnica sin distracciones visuales.
-              </p>
+                    <div className="p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100/50">
+                      <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-tight mb-1">Eficiencia Interventoría</p>
+                      <p className="text-xl font-display font-bold text-emerald-900">
+                        {formatPercentage(((selectedUF ? selectedUF.interventoriaContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0)) / (selectedUF ? selectedUF.interventoriaContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.executed, 0)) * 100) || 0)}
+                      </p>
+                    </div>
             </div>
 
             {/* Quick Access Actions */}
@@ -903,7 +664,7 @@ export const ExecutiveSummary: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredUFData.map((uf, i) => (
+          {unidadesFuncionales.map((uf, i) => (
             const isSelected = selectedUFIds.includes(uf.id);
             return (
               <motion.div
