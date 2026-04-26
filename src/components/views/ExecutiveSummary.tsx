@@ -26,7 +26,6 @@ import {
   ArrowRight
 } from "lucide-react";
 import { useDashboard } from "../../context/DashboardContext";
-import { globalStats, ufData } from "../../data/mockData";
 import { formatCurrency, formatPercentage, cn, getStatusColor } from "../../lib/utils";
 import { Card } from "../Card";
 import { 
@@ -54,21 +53,101 @@ import { DetailedFinancialTable } from "../DetailedFinancialTable";
 import { BudgetAnalysisTable } from "../BudgetAnalysisTable";
 
 export const ExecutiveSummary: React.FC = () => {
-  const { selectedUFIds, setSelectedUFIds, filteredUFData, isConsolidated, setCurrentView } = useDashboard();
+  const { 
+    selectedUFIds, 
+    setSelectedUFIds, 
+    unidadesFuncionales,
+    ufSeleccionada,
+    contratos,
+    cronograma,
+    hitos,
+    fases,
+    apu,
+    curvaS,
+    actas,
+    resumenActas,
+    alertas,
+    reprogramaciones,
+    loading,
+    error
+  } = useDashboard();
   const [activeTab, setActiveTab] = useState<"financiero" | "curva" | "cronograma" | "facturacion" | "alertas">("financiero");
   const scurveRef = React.useRef<HTMLDivElement>(null);
   const contractRef = React.useRef<HTMLDivElement>(null);
 
   // Calculate stats based on filtered data
-  const stats = isConsolidated ? {
-    totalContractual: filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.value + uf.interventoriaContract.value, 0),
-    totalExecuted: filteredUFData.reduce((acc, uf) => acc + uf.constructorContract.executed + uf.interventoriaContract.executed, 0),
-    globalExecution: filteredUFData.reduce((acc, uf) => acc + uf.financialProgress, 0) / filteredUFData.length,
-    activeUFs: filteredUFData.length,
-    totalUFs: ufData.length
-  } : null;
+  const stats = React.useMemo(() => {
+    if (!unidadesFuncionales || unidadesFuncionales.length === 0) return null;
+    
+    return {
+      totalContractual: unidadesFuncionales.reduce((acc, uf) => 
+        acc + (uf.constructorContract?.value || 0) + (uf.interventoriaContract?.value || 0), 0),
+      totalExecuted: unidadesFuncionales.reduce((acc, uf) => 
+        acc + (uf.constructorContract?.executed || 0) + (uf.interventoriaContract?.executed || 0), 0),
+      globalExecution: unidadesFuncionales.length > 0 
+        ? unidadesFuncionales.reduce((acc, uf) => acc + (uf.financialProgress || 0), 0) / unidadesFuncionales.length 
+        : 0,
+      activeUFs: unidadesFuncionales.length,
+      totalUFs: unidadesFuncionales.length
+    };
+  }, [unidadesFuncionales]);
 
-  const selectedUF = selectedUFIds.length === 1 ? filteredUFData[0] : null;
+  const selectedUF = selectedUFIds.length === 1 ? 
+    unidadesFuncionales.find(uf => uf.id === selectedUFIds[0]) : null;
+
+  // Consolidated S-Curve for construction phase - SUM money values then derive percentage
+  const consolidatedSCurve = React.useMemo(() => {
+    if (!unidadesFuncionales || unidadesFuncionales.length === 0) return [];
+    
+    const points: any[] = [];
+    const totalGlobalValue = unidadesFuncionales.reduce((acc, uf) => 
+      acc + (uf.constructorContract?.value || 0) + (uf.interventoriaContract?.value || 0), 0);
+
+    unidadesFuncionales.forEach(uf => {
+      const ufTotalVal = (uf.constructorContract?.value || 0) + (uf.interventoriaContract?.value || 0);
+      // Usar curvaS o constructionSCurve dependiendo de qué datos estén disponibles
+      const curveData = uf.constructionSCurve || uf.curvaS || [];
+      
+      curveData.forEach((p: any, i: number) => {
+        if (!points[i]) {
+          points[i] = { 
+            month: p.month, 
+            programmedMoney: 0, 
+            programmedInitialMoney: 0,
+            reprogramming1Money: 0,
+            reprogramming2Money: 0,
+            reprogramming3Money: 0,
+            reprogramming4Money: 0,
+            reprogramming5Money: 0,
+            executedMoney: 0,
+            invoicedMoney: 0
+          };
+        }
+        points[i].programmedMoney += ((p.programmed || 0) / 100) * ufTotalVal;
+        points[i].programmedInitialMoney += (((p.programmedInitial || p.programmed) || 0) / 100) * ufTotalVal;
+        points[i].reprogramming1Money += (((p.reprogramming1 || p.programmedInitial || p.programmed) || 0) / 100) * ufTotalVal;
+        points[i].reprogramming2Money += (((p.reprogramming2 || p.reprogramming1 || p.programmedInitial || p.programmed) || 0) / 100) * ufTotalVal;
+        points[i].reprogramming3Money += (((p.reprogramming3 || p.reprogramming2 || p.reprogramming1 || p.programmedInitial || p.programmed) || 0) / 100) * ufTotalVal;
+        points[i].reprogramming4Money += (((p.reprogramming4 || p.reprogramming3 || p.reprogramming2 || p.reprogramming1 || p.programmedInitial || p.programmed) || 0) / 100) * ufTotalVal;
+        points[i].reprogramming5Money += (((p.reprogramming5 || p.reprogramming4 || p.reprogramming3 || p.reprogramming2 || p.reprogramming1 || p.programmedInitial || p.programmed) || 0) / 100) * ufTotalVal;
+        points[i].executedMoney += ((p.executed || 0) / 100) * ufTotalVal;
+        points[i].invoicedMoney += ((p.invoiced || 0) / 100) * ufTotalVal;
+      });
+    });
+
+    return points.map(p => ({
+      ...p,
+      programmed: (p.programmedMoney / totalGlobalValue) * 100,
+      programmedInitial: (p.programmedInitialMoney / totalGlobalValue) * 100,
+      reprogramming1: (p.reprogramming1Money / totalGlobalValue) * 100,
+      reprogramming2: (p.reprogramming2Money / totalGlobalValue) * 100,
+      reprogramming3: (p.reprogramming3Money / totalGlobalValue) * 100,
+      reprogramming4: (p.reprogramming4Money / totalGlobalValue) * 100,
+      reprogramming5: (p.reprogramming5Money / totalGlobalValue) * 100,
+      executed: (p.executedMoney / totalGlobalValue) * 100,
+      invoiced: (p.invoicedMoney / totalGlobalValue) * 100,
+    })).filter(p => p); // Filtrar valores undefined
+  }, [unidadesFuncionales]);
 
   // Consolidated S-Curve for construction phase - SUM money values then derive percentage
   const consolidatedSCurve = React.useMemo(() => {
