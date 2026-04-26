@@ -602,31 +602,22 @@ export const ExecutiveSummary: React.FC = () => {
                     <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50">
                       <p className="text-[10px] font-bold text-blue-700 uppercase tracking-tight mb-1">Eficiencia Constructor</p>
                       <p className="text-xl font-display font-bold text-blue-900">
-                        {formatPercentage(((selectedUF ? selectedUF.constructorContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.constructorContract.invoiced, 0)) / (selectedUF ? selectedUF.constructorContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.constructorContract.executed, 0)) * 100) || 0)}
+                        {formatPercentage(((selectedUF ? selectedUF.constructorContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.constructorContract.invoiced, 0)) / (selectedUF ? selectedUF.constructorContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.constructorContract.executed, 0)) * 100 || 0)}
                       </p>
                     </div>
                     <div className="p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100/50">
                       <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-tight mb-1">Eficiencia Interventoría</p>
                       <p className="text-xl font-display font-bold text-emerald-900">
-                        {formatPercentage(((selectedUF ? selectedUF.interventoriaContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0)) / (selectedUF ? selectedUF.interventoriaContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.executed, 0)) * 100) || 0)}
+                        {formatPercentage(((selectedUF ? selectedUF.interventoriaContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0)) / (selectedUF ? selectedUF.interventoriaContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.executed, 0)) * 100 || 0)}
                       </p>
                     </div>
                   </div>
-                    <div className="p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100/50">
-                      <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-tight mb-1">Eficiencia Interventoría</p>
-                      <p className="text-xl font-display font-bold text-emerald-900">
-                        {formatPercentage(((selectedUF ? selectedUF.interventoriaContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0)) / (selectedUF ? selectedUF.interventoriaContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.executed, 0)) * 100) || 0)}
-</p>
-                    </div>
-                    <div className="p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100/50">
-                      <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-tight mb-1">Eficiencia Interventoría</p>
-                      <p className="text-xl font-display font-bold text-emerald-900">
-                        {formatPercentage(((selectedUF ? selectedUF.interventoriaContract.invoiced : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.invoiced, 0)) / (selectedUF ? selectedUF.interventoriaContract.executed : unidadesFuncionales.reduce((acc, uf) => acc + uf.interventoriaContract.executed, 0)) * 100) || 0)}
-                      </p>
-                    </div>
+                </div>
+              </div>
             </div>
-
-            {/* Quick Access Actions */}
+          )}
+        </div>
+      </AnimatePresence>
             <div className="absolute top-6 right-6 z-20 flex flex-col gap-3">
               <a 
                 href="https://www.google.com/maps/d/viewer?mid=1qaBGL3U1L4IxtPmtckJsT2JzveDd_FM" 
